@@ -53,10 +53,11 @@ public class SongController {
 		DbQueryStatus dbQueryStatus = songDal.findSongById(songId);
 
 		// TODO: uncomment these two lines when you have completed the implementation of findSongById in SongDal
-		// response.put("message", dbQueryStatus.getMessage());
-		// return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
-		
-		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: remove when the above 2 lines are uncommented
+
+//		 response.put("message", dbQueryStatus.getMessage());
+		 response.put("data", dbQueryStatus.getData());
+		 response.put("status", dbQueryStatus.getdbQueryExecResult());
+		 return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
 	
@@ -65,10 +66,13 @@ public class SongController {
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("path", String.format("GET %s", Utils.getUrl(request)));
+//		response.put("path", String.format("GET %s", Utils.getUrl(request)));
 		// TODO: add any other values to the map following the example in getSongById
+		DbQueryStatus dbQueryStatus = songDal.getSongTitleById(songId);
+		response.put("data", dbQueryStatus.getData());
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
 
-		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
 	
