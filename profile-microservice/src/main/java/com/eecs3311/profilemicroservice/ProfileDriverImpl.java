@@ -9,6 +9,7 @@ import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
+import org.neo4j.driver.*;
 
 import org.springframework.stereotype.Repository;
 import org.neo4j.driver.v1.Transaction;
@@ -47,25 +48,79 @@ public class ProfileDriverImpl implements ProfileDriver {
 	
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
-		
-		return null;
+		String usernamePlaylist = userName + "-favorites";
+		try (Driver driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "12345678"))) {
+			// Start a session
+			try (Session session = driver.session()) {
+				// Run a query to add profile to Profile database
+				session.run("CREATE (p:profile {userName: '$userName', fullName: '$fullName', password: '$password'})", Values.parameters("userName", userName, "$fullName", $fullName, "password", password));
+				// Creates userName-favourites playlist
+				session.run("CREATE (pl:playlist {plName: 'username-favorites'})", values.parameters("username-favorites", usernamePlaylist));
+				// creates relation '(nProfile:profile)-[:created]->(nPlaylist:playlist)'
+				session.run("MATCH (p:profile {userName: '$username'}), (pl:playlist {plName: '$username-favorites'})\nCREATE (p)-[:created]->(pl)", values.parameters("username", username, "username-favorites", usernamePlaylist));
+
+				return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+			}
+		} catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+			return new DbQueryStatus("Failed: " + e.getMessage(), DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
 	public DbQueryStatus followFriend(String userName, String frndUserName) {
-		
-		return null;
+		try (Driver driver = ProfileMicroserviceApplication.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "12345678"))) {
+			// Start a session
+			try (Session session = driver.session()) {
+				// follow friend query
+				session.run("MATCH (p1:profile {userName: '$userName'}), (p2:profile {userName: '$frndUserName'})\nCREATE (p1)-[:follows]->(p2)");
+
+				return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+			}
+		} catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+			return new DbQueryStatus("Failed: " + e.getMessage(), DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
 	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
-		
-		return null;
+		try (Driver driver = ProfileMicroserviceApplication.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "12345678"))) {
+			// Start a session
+			try (Session session = driver.session()) {
+				// unfollow friend query
+				Result result = session.run("MATCH (:Person {userName: $userName})-[r:follows]->(:Person {friendUserName: $frndUserName}) DELETE r",
+						Values.parameters("$userName", "userName", "$frndUserName", "frndUserName"));
+
+				return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+			}
+		} catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+			return new DbQueryStatus("Failed: " + e.getMessage(), DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
-			
-		return null;
+		try (Driver driver = ProfileMicroserviceApplication.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "12345678"))) {
+			// Start a session
+			try (Session session = driver.session()) {
+				// get a list of all songs liked by friends of 'userName'
+				Result result = session.run("MATCH (:Person {userName: $userName})-[:follows]->(friend:Person)-[:liked-by]->(song:Song)\nRETURN song.songName as likedSong",
+						Values.parameters("$userName", "userName"));
+
+				// store all retrieved friends from query into a list
+				List<String> friendList = new ArrayList<>();
+				while (result.hasNext()) {
+					Record record = result.next();
+					likedSongs.add(record.get("likedSong").asString());
+				}
+
+				return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+			}
+		} catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+			return new DbQueryStatus("Failed: " + e.getMessage(), DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 }
