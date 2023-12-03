@@ -33,13 +33,31 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 	@Override
 	public DbQueryStatus likeSong(String userName, String songId) {
-
-		return null;
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			session.run(
+					String.format("MATCH (p:profile {userName: '%s'}), (s:song {songId: '%s'}) CREATE (p)-[:liked]->(s)", userName, songId)
+			);
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
-		
-		return null;
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			session.run(
+					String.format("MATCH (p:profile {userName: '%s'})-[r:liked]->(s:song {songId: '%s'}) DELETE r", userName, songId)
+			);
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
 	}
 }
