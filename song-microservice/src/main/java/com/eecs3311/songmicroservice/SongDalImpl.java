@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,7 +28,21 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
 		// TODO Auto-generated method stub
-		return null;
+		DbQueryExecResult execResult;
+		String response;
+		System.out.println(songToAdd.toString());
+
+		try {
+			db.insert(songToAdd);
+			response = String.format("Successfully added Song %s to database", songToAdd.getSongName());
+			execResult = DbQueryExecResult.QUERY_OK;
+		} catch (Exception e){
+			response = String.format("Error %s", e);
+			execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
+		}
+
+		DbQueryStatus status = new DbQueryStatus(response, execResult);
+		return status;
 	}
 
 	@Override
@@ -79,12 +94,42 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus deleteSongById(String songId) {
 		// TODO Auto-generated method stub
-		return null;
+		Query query = new Query(Criteria.where("_id").is(songId));
+		DbQueryExecResult execResult;
+		String response;
+
+		try {
+			db.remove(query, Song.class);
+			response = String.format("Removed Song with ID %s from database", songId);
+			execResult = DbQueryExecResult.QUERY_OK;
+		} catch (Exception e){
+			response = String.format("Error %s", e);
+			execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
+		}
+		System.out.println(response);
+		DbQueryStatus status = new DbQueryStatus(response, execResult);
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus updateSongFavouritesCount(String songId, boolean shouldDecrement) {
 		// TODO Auto-generated method stub
-		return null;
+		Query query = new Query(Criteria.where("_id").is(songId));
+		int incrementBy = shouldDecrement ? -1 : 1;
+		Update update = new Update().inc("songAmountFavourites", incrementBy);
+		DbQueryExecResult execResult;
+		String response;
+
+		try {
+			db.updateFirst(query, update, Song.class);
+			response = String.format("Removed Song with ID %s from database", songId);
+			execResult = DbQueryExecResult.QUERY_OK;
+		} catch (Exception e){
+			response = String.format("Error %s", e);
+			execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
+		}
+
+		DbQueryStatus status = new DbQueryStatus(response, execResult);
+		return status;
 	}
 }
