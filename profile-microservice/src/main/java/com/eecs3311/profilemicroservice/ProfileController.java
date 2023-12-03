@@ -59,9 +59,11 @@ public class ProfileController {
 		String fullName = params.get("fullName");
 		String password = params.get("password");
 		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(userName, fullName, password);
-		// return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+		response.put("message", dbQueryStatus.getMessage());
 
-		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+//		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
 	}
 
 	@RequestMapping(value = "/followFriend", method = RequestMethod.PUT)
@@ -70,8 +72,12 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		// TODO: add any other values to the map following the example in SongController.getSongById
-		
-		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
+		String userName = params.get("userName");
+		String friendUsername = params.get("friendUserName");
+		DbQueryStatus dbQueryStatus = profileDriver.followFriend(userName, friendUsername);
+		response.put("message", dbQueryStatus.getMessage());
+
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)

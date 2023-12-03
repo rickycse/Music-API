@@ -47,25 +47,63 @@ public class ProfileDriverImpl implements ProfileDriver {
 	
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
-		
-		return null;
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			session.run(
+					String.format("CREATE (:profile {userName: '%s', fullName: '%s', password: '%s'})", fullName, password, userName)
+			);
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
 	}
 
 	@Override
-	public DbQueryStatus followFriend(String userName, String frndUserName) {
-		
-		return null;
+	public DbQueryStatus followFriend(String userName, String friendUserName) {
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			session.run(
+					String.format("MATCH (p:profile {userName: '%s'}), (p1:profile {userName: '%s'}) CREATE (p)-[:follows]->(p1)", userName, friendUserName)
+			);
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
 	}
 
 	@Override
-	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
-		
-		return null;
+	public DbQueryStatus unfollowFriend(String userName, String friendUserName) {
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			session.run(
+					String.format("MATCH (p:profile {userName: '%s'})-[r:follows]->(p1:profile {userName: '%s'}) DELETE r", userName, friendUserName)
+			);
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
-			
-		return null;
+		DbQueryStatus status;
+		StatementResult result;
+		try {
+			Session session = driver.session();
+			result = session.run(String.format("MATCH (p:profile {userName: '%s'})-[r:liked]->(s:song) return r", userName));
+
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+			status.setData(result);
+		} catch (Exception e){
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			status.setData(null);
+		}
+		return status;
 	}
 }
