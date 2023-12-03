@@ -52,11 +52,11 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// Run a query to add profile to Profile database
-			session.run("CREATE (p:profile {userName: '$userName', fullName: '$fullName', password: '$password'})", Values.parameters("userName", userName, "$fullName", fullName, "password", password));
+			session.run("CREATE (p:profile {userName: userName, fullName: fullName, password: password})");
 			// Creates userName-favourites playlist
-			session.run("CREATE (pl:playlist {plName: 'username-favorites'})", values.parameters("username-favorites", usernamePlaylist));
+			session.run("CREATE (pl:playlist {plName: usernamePlaylist})");
 			// creates relation '(nProfile:profile)-[:created]->(nPlaylist:playlist)'
-			session.run("MATCH (p:profile {userName: '$username'}), (pl:playlist {plName: '$username-favorites'})\nCREATE (p)-[:created]->(pl)", Values.parameters("username", userName, "username-favorites", usernamePlaylist));
+			session.run("MATCH (p:profile {userName: userName}), (pl:playlist {plName: usernamePlaylist})\nCREATE (p)-[:created]->(pl)");
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e) {
@@ -70,7 +70,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// follow friend query
-			session.run("MATCH (p1:profile {userName: '$userName'}), (p2:profile {userName: '$frndUserName'})\nCREATE (p1)-[:follows]->(p2)");
+			session.run("MATCH (p1:profile {userName: userName}), (p2:profile {userName: frndUserName})\nCREATE (p1)-[:follows]->(p2)");
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e) {
@@ -83,8 +83,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
 		try (Session session = driver.session()) {
 			// unfollow friend query
-			Result result = session.run("MATCH (:Person {userName: $userName})-[r:follows]->(:Person {friendUserName: $frndUserName}) DELETE r",
-					Values.parameters("$userName", "userName", "$frndUserName", "frndUserName"));
+			Result result = session.run("MATCH (:Person {userName: userName})-[r:follows]->(:Person {friendUserName: frndUserName}) DELETE r");
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e) {
@@ -98,8 +97,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// get a list of all songs liked by friends of 'userName'
-			Result result = session.run("MATCH (:Person {userName: $userName})-[:follows]->(friend:Person)-[:liked-by]->(song:Song)\nRETURN song.songName as likedSong",
-					Values.parameters("$userName", "userName"));
+			Result result = session.run("MATCH (:Person {userName: userName})-[:follows]->(friend:Person)-[:liked-by]->(song:Song)\nRETURN song.songName as likedSong");
 
 			// store all retrieved friends from query into a list
 			List<String> friendList = new ArrayList<>();
