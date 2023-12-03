@@ -55,7 +55,10 @@ public class ProfileController {
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
 		//TODO: Add the parameters - String userName, String fullName, String password
-		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile();
+		String userName = params.get("userName");
+		String fullName = params.get("fullName");
+		String password = params.get("password");
+		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(userName, fullName, password);
 		// return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
 		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
@@ -101,7 +104,9 @@ public class ProfileController {
 		// TODO: add any other values to the map following the example in SongController.getSongById
 
 		//TODO: Add the parameters - String userName, String songId
-		DbQueryStatus dbQueryStatus = PlaylistDriverImpl.likeSong();
+		String userName = params.get("userName");
+		String songId = params.get("songId");
+		DbQueryStatus dbQueryStatus = playlistDriver.likeSong(userName, songId);
 		// return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
 		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
@@ -115,7 +120,9 @@ public class ProfileController {
 		// TODO: add any other values to the map following the example in SongController.getSongById
 
 		//TODO: Add the parameters - String userName, String songId
-		DbQueryStatus dbQueryStatus = PlaylistDriverImpl.unlikeSong();
+		String userName = params.get("userName");
+		String songId = params.get("songId");
+		DbQueryStatus dbQueryStatus = playlistDriver.unlikeSong(userName, songId);
 		// return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
 		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
