@@ -50,9 +50,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		DbQueryStatus status;
 		try {
 			Session session = driver.session();
-			session.run(
-					String.format("CREATE (:profile {userName: '%s', fullName: '%s', password: '%s'})", fullName, password, userName)
-			);
+			session.run(String.format("CREATE (nProfile:profile {userName: '%s', fullName: '%s', password: '%s'})-[:created]->(nPlaylist:playlist {plName: '%s'})", fullName, password, userName, userName + "-favorites"));
 			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e){
 			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
