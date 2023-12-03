@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.*;
-
 import com.eecs3311.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
