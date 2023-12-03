@@ -30,7 +30,7 @@ public class SongDalImpl implements SongDal {
 		// TODO Auto-generated method stub
 		DbQueryExecResult execResult;
 		String response;
-		System.out.println(songToAdd.toString());
+		Song data = songToAdd;
 
 		try {
 			db.insert(songToAdd);
@@ -42,6 +42,7 @@ public class SongDalImpl implements SongDal {
 		}
 
 		DbQueryStatus status = new DbQueryStatus(response, execResult);
+		status.setData(data);
 		return status;
 	}
 
@@ -121,7 +122,16 @@ public class SongDalImpl implements SongDal {
 		String response;
 
 		try {
-			db.updateFirst(query, update, Song.class);
+			Query playCheck = new Query(Criteria.where("_id").is(songId));
+			playCheck.fields().include("songAmountFavourites").exclude("_id");
+			Song song = db.findOne(playCheck, Song.class);
+
+			// If the songAmountFavourites is 0 and the user wants to decrement, do nothing.
+			if(song != null && song.getSongAmountFavourites() == 0 && shouldDecrement){}
+			else {
+				db.updateFirst(query, update, Song.class);
+			}
+
 			response = String.format("Removed Song with ID %s from database", songId);
 			execResult = DbQueryExecResult.QUERY_OK;
 		} catch (Exception e){

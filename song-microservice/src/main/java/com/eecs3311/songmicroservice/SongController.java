@@ -104,7 +104,13 @@ public class SongController {
 		String songArtistFullName = params.get("songArtistFullName");
 		String songAlbum = params.get("songAlbum");
 
-		Song newSong = new Song(songName, songArtistFullName, songAlbum);
+		Song newSong;
+		if(params.containsKey("songDuration")){
+			long songDuration = Long.parseLong(params.get("songDuration"));
+			newSong = new Song(songName, songArtistFullName, songAlbum, songDuration);
+		} else {
+			newSong = new Song(songName, songArtistFullName, songAlbum);
+		}
 		newSong.setId(new ObjectId());
 
 		DbQueryStatus dbQueryStatus = songDal.addSong(newSong);
@@ -119,7 +125,7 @@ public class SongController {
 	public ResponseEntity<Map<String, Object>> updateFavouritesCount(@RequestBody Map<String, String> params, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("data", String.format("PUT %s", Utils.getUrl(request)));
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		// TODO: add any other values to the map following the example in getSongById
 		String songId = params.get("songId");
 		boolean shouldDecrement = Boolean.parseBoolean(params.get("shouldDecrement"));
