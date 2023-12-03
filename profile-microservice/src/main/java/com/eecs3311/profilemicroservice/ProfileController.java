@@ -92,9 +92,6 @@ public class ProfileController {
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		// TODO: add any other values to the map following the example in SongController.getSongById
 
-		// get parameters from url
-		String userName = params.get("userName");
-
 		DbQueryStatus dbQueryStatus = profileDriver.getAllSongFriendsLike(userName);
 
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());

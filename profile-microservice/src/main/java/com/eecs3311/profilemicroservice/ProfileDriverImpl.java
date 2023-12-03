@@ -52,11 +52,14 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// Run a query to add profile to Profile database
-			session.run("CREATE (p:profile {userName: userName, fullName: fullName, password: password})");
+			String query1 = String.format("CREATE (p:profile {userName: '%s', fullName: '%s', password: '%s'})", userName, fullName, password);
+			session.run(query1);
 			// Creates userName-favourites playlist
-			session.run("CREATE (pl:playlist {plName: usernamePlaylist})");
+			String query2 = String.format("CREATE (pl:playlist {plName: '%s'})", usernamePlaylist);
+			session.run(query2);
 			// creates relation '(nProfile:profile)-[:created]->(nPlaylist:playlist)'
-			session.run("MATCH (p:profile {userName: userName}), (pl:playlist {plName: usernamePlaylist})\nCREATE (p)-[:created]->(pl)");
+			String query3 = String.format("MATCH (p:profile {userName: '%s'}), (pl:playlist {plName: '%s'})\nCREATE (p)-[:created]->(pl)", userName, usernamePlaylist);
+			session.run(query3);
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e) {
@@ -70,7 +73,8 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// follow friend query
-			session.run("MATCH (p1:profile {userName: userName}), (p2:profile {userName: frndUserName})\nCREATE (p1)-[:follows]->(p2)");
+			String query1 = String.format("MATCH (p1:profile {userName: '%s'}), (p2:profile {userName: '%s'})\nCREATE (p1)-[:follows]->(p2)", userName, frndUserName);
+			session.run(query1);
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e) {
@@ -83,7 +87,8 @@ public class ProfileDriverImpl implements ProfileDriver {
 	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
 		try (Session session = driver.session()) {
 			// unfollow friend query
-			Result result = session.run("MATCH (:Person {userName: userName})-[r:follows]->(:Person {friendUserName: frndUserName}) DELETE r");
+			String query1 = String.format("MATCH (p1:profile {userName: '%s'})-[r:follows]->(p2:profile {userName: '%s'}) DELETE r", userName, frndUserName);
+			session.run(query1);
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e) {
@@ -97,10 +102,11 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// get a list of all songs liked by friends of 'userName'
-			Result result = session.run("MATCH (:Person {userName: userName})-[:follows]->(friend:Person)-[:liked-by]->(song:Song)\nRETURN song.songName as likedSong");
+			String query1 = String.format("MATCH (:Person {userName: '%s'})-[:follows]->(friend:Person)-[:liked-by]->(song:Song)\nRETURN song.songName as likedSong", userName);
+			StatementResult result = session.run(query1);
 
-			// store all retrieved friends from query into a list
-			List<String> friendList = new ArrayList<>();
+			// store all retrieved friend's liked songs from query into a list
+			List<String> likedSongs = new ArrayList<>();
 			while (result.hasNext()) {
 				Record record = result.next();
 				likedSongs.add(record.get("likedSong").asString());
