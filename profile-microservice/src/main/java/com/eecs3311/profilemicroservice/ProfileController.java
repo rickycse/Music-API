@@ -58,12 +58,14 @@ public class ProfileController {
 		String userName = params.get("userName");
 		String fullName = params.get("fullName");
 		String password = params.get("password");
+		System.out.println("USERNAME = " + userName);
+
 
 		//TESTING OOUT CODE:
 		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(userName, fullName, password);
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
-		//return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById - above line of code?
+
 	}
 
 	@RequestMapping(value = "/followFriend", method = RequestMethod.PUT)
