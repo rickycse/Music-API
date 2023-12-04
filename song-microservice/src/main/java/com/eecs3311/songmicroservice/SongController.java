@@ -57,6 +57,7 @@ public class SongController {
 
 //		 response.put("message", dbQueryStatus.getMessage());
 		 response.put("data", dbQueryStatus.getData());
+		 response.put("response", dbQueryStatus.getMessage());
 		 response.put("status", dbQueryStatus.getdbQueryExecResult());
 		 return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
@@ -105,12 +106,13 @@ public class SongController {
 		String songAlbum = params.get("songAlbum");
 
 		Song newSong;
-		if(params.containsKey("songDuration")){
-			long songDuration = Long.parseLong(params.get("songDuration"));
-			newSong = new Song(songName, songArtistFullName, songAlbum, songDuration);
-		} else {
-			newSong = new Song(songName, songArtistFullName, songAlbum);
-		}
+//		if(params.containsKey("songDuration")){
+//			long songDuration = Long.parseLong(params.get("songDuration"));
+//			newSong = new Song(songName, songArtistFullName, songAlbum, songDuration);
+//		} else {
+//
+//		}
+		newSong = new Song(songName, songArtistFullName, songAlbum);
 		newSong.setId(new ObjectId());
 
 		DbQueryStatus dbQueryStatus = songDal.addSong(newSong);

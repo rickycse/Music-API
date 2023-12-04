@@ -49,17 +49,19 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus findSongById(String songId) {
 		// TODO Auto-generated method stub
+		Query query = new Query(Criteria.where("_id").is(songId));
 		DbQueryExecResult execResult;
 		String response;
 		Song data;
 
 		try {
-			data = db.findById(songId, Song.class);
+			data = db.findOne(query, Song.class);
+			if(data == null) return new DbQueryStatus(String.format("Song with ID %s does not exist.", songId), DbQueryExecResult.QUERY_OK);
 			response = String.format("Song: %s retrieved successfully.", data.getSongName());
 			execResult = DbQueryExecResult.QUERY_OK;
 		} catch (Exception e) {
 			data = null;
-			response = String.format("Error retrieving Song with ID: %s", songId);
+			response = String.format("Error %s", e);
 			execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
 		}
 

@@ -18,7 +18,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 	Driver driver = ProfileMicroserviceApplication.driver;
 
-	public static void InitProfileDb() {
+ 	public static void InitProfileDb() {
 		String queryStr;
 
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
@@ -94,8 +94,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		StatementResult result;
 		try {
 			Session session = driver.session();
-			result = session.run(String.format("MATCH (p:profile {userName: '%s'})-[r:liked]->(s:song) return r", userName));
-
+			result = session.run(String.format("MATCH (p:playlist {plName: '%s-favorites'})-[r:includes]->(s:song) return r", userName));
 			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 			status.setData(result);
 		} catch (Exception e){

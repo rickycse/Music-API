@@ -33,13 +33,13 @@ public class Song {
 		this.songDuration = 60;
 	}
 
-	public Song(String songName, String songArtistFullName, String songAlbum, long songDuration) {
-		this.songName = songName;
-		this.songArtistFullName = songArtistFullName;
-		this.songAlbum = songAlbum;
-		this.songAmountFavourites = 0;
-		this.songDuration = songDuration;
-	}
+//	public Song(String songName, String songArtistFullName, String songAlbum, long songDuration) {
+//		this.songName = songName;
+//		this.songArtistFullName = songArtistFullName;
+//		this.songAlbum = songAlbum;
+//		this.songAmountFavourites = 0;
+//		this.songDuration = songDuration;
+//	}
 
 	public long getSongDuration() { return songDuration; }
 
@@ -99,7 +99,7 @@ public class Song {
 		jsonRepresentation.put("songArtistFullName", this.songArtistFullName);
 		jsonRepresentation.put("songAlbum", this.songAlbum);
 		jsonRepresentation.put("songAmountFavourites", String.valueOf(this.songAmountFavourites));
-		
+		jsonRepresentation.put("songDuration", String.valueOf(this.songDuration));
 		return jsonRepresentation;
 	}
 }
