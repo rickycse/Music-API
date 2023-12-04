@@ -95,6 +95,8 @@ public class ProfileController {
 		// TODO: add any other values to the map following the example in SongController.getSongById
 
 		DbQueryStatus dbQueryStatus = profileDriver.getAllSongFriendsLike(userName);
+		System.out.println("Has exited profileDriverImpl.java and entered controller - " + dbQueryStatus.getData());
+		//response.get(dbQueryStatus.getData());
 
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}

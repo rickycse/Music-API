@@ -92,22 +92,91 @@ public class ProfileDriverImpl implements ProfileDriver {
 		}
 	}
 
+	public String[] getStringArrayFromArrayList(List<String> list) {
+		String[] arr = new String[list.size()];
+		for (int i = 0; i < list.size(); i++) {
+			arr[i] = list.get(i);
+		}
+		return arr;
+	}
+
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
 		// Start a session
 		try (Session session = driver.session()) {
-			// get a list of all songs liked by friends of 'userName'
-			String query1 = String.format("MATCH (:Person {userName: '%s'})-[:follows]->(friend:Person)-[:liked-by]->(song:Song)\nRETURN song.songName as likedSong", userName);
+			// creating variables
+			Map<String, String[]> userNameToLikedSongs = new HashMap<>();
+			String[] emptyArrayTemp = new String[0];
+
+			// Performing query1 to retrieve a list of all profile(s) userName follows
+			String query1 = String.format("MATCH (p:profile {userName: '%s'})-[:follows]->(friend:profile) RETURN friend.userName AS userName", userName);
 			StatementResult result = session.run(query1);
 
-			// store all retrieved friend's liked songs from query into a list
-			List<String> likedSongs = new ArrayList<>();
-			while (result.hasNext()) {
-				Record record = result.next();
-				likedSongs.add(record.get("likedSong").asString());
-			}
+			// making sure retrieved result is not empty (aka userName doe not follow anyone)
+			if (result.hasNext()) {
+				// creating an array to store all usernames of friends
+				List<String> friendList = new ArrayList<>();
 
-			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+				// looping through all exiting results
+				while (result.hasNext()) {
+					Record record = result.next();
+
+					// store all record values in 'friendList' string array
+					friendList.add(record.get("userName").asString());
+				}
+
+				// Loop through each index in 'friendList' and determine if there are any liked songs to return
+				int index = 0;
+				String currentUserName = String.valueOf(friendList.get(index));
+				String userFavPlaylistName = currentUserName + "-favorites";
+
+				while (index < friendList.size()) {
+					// setting up query2 to use friend's userName to get their liked songs
+					String query2 = String.format("MATCH (p:profile {userName: '%s'})-[:created]->(pl:playlist {plName: '%s'})-[:includes]->(song:song)\nRETURN song.songId AS likedSongId", currentUserName, userFavPlaylistName);
+					StatementResult result2 = driver.session().run(query2);
+
+					// Check to see if there are any liked songs for current friend in the list
+					if (result2.hasNext()) {
+						List<String> likedSongIds = new ArrayList<>();
+
+						// loop through the result2 values, and store it into the map corresponding to the userName
+						while (result2.hasNext()) {
+							Record record2 = result2.next();
+
+							// store all record2 values in 'likedSongIds' string array
+							System.out.println("SONG: "+record2.toString());
+							likedSongIds.add(record2.get("likedSongId").asString());
+						}
+
+						// Storing friendName  and likedSongIds into map
+						Object[] friendArr = likedSongIds.toArray();
+						userNameToLikedSongs.put(String.valueOf(friendList.get(index)), getStringArrayFromArrayList(likedSongIds));
+
+						// After storing likedSongIds into the map, then we will delete all the data from the likedSongIds
+						likedSongIds.clear();
+					} else {
+						// Storing currentFriendUserName and the empty array as the likedSongsIds in the map
+						userNameToLikedSongs.put(String.valueOf(friendList.get(index)), emptyArrayTemp);
+					}
+
+					// Before the end of the loop, increment index and change currentUserName
+					index++;
+					if (index < friendList.size()) {
+						// there's still more friends
+						currentUserName = String.valueOf(friendList.get(index));
+					}
+
+				}
+
+				DbQueryStatus dbQueryStat = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+				dbQueryStat.setData(userNameToLikedSongs);
+				return dbQueryStat;
+			} else {
+				// user doe not follow any friends, return empty map and HTTP OK response
+				DbQueryStatus dbQueryStat = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+				dbQueryStat.setData(userNameToLikedSongs);
+				return dbQueryStat;
+			}
 		} catch (Exception e) {
 			System.err.println("Error: " + e.getMessage());
 			return new DbQueryStatus("Failed: " + e.getMessage(), DbQueryExecResult.QUERY_ERROR_GENERIC);
