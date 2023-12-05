@@ -33,13 +33,13 @@ public class Song {
 		this.songDuration = 60;
 	}
 
-	public Song(String songName, String songArtistFullName, String songAlbum, long songDuration) {
-		this.songName = songName;
-		this.songArtistFullName = songArtistFullName;
-		this.songAlbum = songAlbum;
-		this.songAmountFavourites = 0;
-		this.songDuration = songDuration;
-	}
+//	public Song(String songName, String songArtistFullName, String songAlbum, long songDuration) {
+//		this.songName = songName;
+//		this.songArtistFullName = songArtistFullName;
+//		this.songAlbum = songAlbum;
+//		this.songAmountFavourites = 0;
+//		this.songDuration = songDuration;
+//	}
 
 	public long getSongDuration() { return songDuration; }
 

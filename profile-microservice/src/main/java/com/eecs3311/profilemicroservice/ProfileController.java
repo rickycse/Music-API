@@ -58,14 +58,10 @@ public class ProfileController {
 		String userName = params.get("userName");
 		String fullName = params.get("fullName");
 		String password = params.get("password");
-		System.out.println("USERNAME = " + userName);
-
 
 		//TESTING OOUT CODE:
 		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(userName, fullName, password);
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
-
-
 	}
 
 	@RequestMapping(value = "/followFriend", method = RequestMethod.PUT)
@@ -143,8 +139,25 @@ public class ProfileController {
 		String userName = params.get("userName");
 		String songId = params.get("songId");
 		DbQueryStatus dbQueryStatus = playlistDriver.unlikeSong(userName, songId);
-		// return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+		 return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
-		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
+//		return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
+	}
+
+	@RequestMapping(value = "/generateMixedPlaylist", method = RequestMethod.GET)
+	public ResponseEntity<Map<String, Object>> generateMixedPlaylist(@RequestBody Map<String, String> params, HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		// TODO: add any other values to the map following the example in SongController.getSongById
+
+		String userName = params.get("userName");
+		String friendUsername = params.get("friendUserName");
+		DbQueryStatus dbQueryStatus = playlistDriver.generateMixedPlaylist(userName, friendUsername);
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("data", dbQueryStatus.getData());
+
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+//		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 }

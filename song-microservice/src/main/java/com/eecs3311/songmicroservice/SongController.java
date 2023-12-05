@@ -70,9 +70,10 @@ public class SongController {
 		response.put("path", String.format("GET %s", Utils.getUrl(request)));
 		// TODO: add any other values to the map following the example in getSongById
 		DbQueryStatus dbQueryStatus = songDal.getSongTitleById(songId);
+
 		response.put("data", dbQueryStatus.getData());
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
-
+		System.out.println(dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
@@ -107,7 +108,7 @@ public class SongController {
 		Song newSong;
 		if(params.containsKey("songDuration")){
 			long songDuration = Long.parseLong(params.get("songDuration"));
-			newSong = new Song(songName, songArtistFullName, songAlbum, songDuration);
+			newSong = new Song(songName, songArtistFullName, songAlbum);
 		} else {
 			newSong = new Song(songName, songArtistFullName, songAlbum);
 		}

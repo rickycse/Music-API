@@ -86,7 +86,7 @@ public class SongDalImpl implements SongDal {
 			response = String.format("Error %s.", e);
 			execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
 		}
-
+		System.out.println(response);
 		DbQueryStatus status = new DbQueryStatus(response, execResult);
 		if (data != null) status.setData(data.getSongName());
 		return status;
