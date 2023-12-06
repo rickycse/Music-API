@@ -126,13 +126,15 @@ public class ProfileDriverImpl implements ProfileDriver {
 				}
 
 				// Loop through each index in 'friendList' and determine if there are any liked songs to return
-				int index = 0;
-				String currentUserName = String.valueOf(friendList.get(index));
-				String userFavPlaylistName = currentUserName + "-favorites";
+				String currentUserName = "";
+				String userFavPlaylistName = "";
 
-				while (index < friendList.size()) {
+				for (int i = 0; i < friendList.size(); i++) {
+					currentUserName = friendList.get(i);
+					userFavPlaylistName = currentUserName + "-favorites";
+
 					// setting up query2 to use friend's userName to get their liked songs
-					String query2 = String.format("MATCH (p:profile {userName: '%s'})-[:created]->(pl:playlist {plName: '%s'})-[:includes]->(song:song)\nRETURN song.songId AS likedSongId", currentUserName, userFavPlaylistName);
+					String query2 = String.format("MATCH (p:profile {userName: '%s'})-[:created]->(pl:playlist {plName: '%s'})-[:includes]->(song:song)\nRETURN song.songId AS likedSongId", friendList.get(i), userFavPlaylistName);
 					StatementResult result2 = driver.session().run(query2);
 
 					// Check to see if there are any liked songs for current friend in the list
@@ -144,35 +146,24 @@ public class ProfileDriverImpl implements ProfileDriver {
 							Record record2 = result2.next();
 
 							// store all record2 values in 'likedSongIds' string array
-							System.out.println("SONG: "+record2.toString());
 							likedSongIds.add(record2.get("likedSongId").asString());
 						}
-
 						// Storing friendName  and likedSongIds into map
-						Object[] friendArr = likedSongIds.toArray();
-						userNameToLikedSongs.put(String.valueOf(friendList.get(index)), getStringArrayFromArrayList(likedSongIds));
+						userNameToLikedSongs.put(friendList.get(i), getStringArrayFromArrayList(likedSongIds));
 
 						// After storing likedSongIds into the map, then we will delete all the data from the likedSongIds
 						likedSongIds.clear();
 					} else {
 						// Storing currentFriendUserName and the empty array as the likedSongsIds in the map
-						userNameToLikedSongs.put(String.valueOf(friendList.get(index)), emptyArrayTemp);
+						userNameToLikedSongs.put(friendList.get(i), emptyArrayTemp);
 					}
-
-					// Before the end of the loop, increment index and change currentUserName
-					index++;
-					if (index < friendList.size()) {
-						// there's still more friends
-						currentUserName = String.valueOf(friendList.get(index));
-					}
-
 				}
 
 				DbQueryStatus dbQueryStat = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 				dbQueryStat.setData(userNameToLikedSongs);
 				return dbQueryStat;
 			} else {
-				// user doe not follow any friends, return empty map and HTTP OK response
+				// user does not follow any friends, return empty map and HTTP OK response
 				DbQueryStatus dbQueryStat = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 				dbQueryStat.setData(userNameToLikedSongs);
 				return dbQueryStat;

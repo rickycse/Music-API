@@ -62,7 +62,6 @@ public class ProfileController {
 		// Setting the response data
 		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(userName, fullName, password);
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
-		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
@@ -79,7 +78,6 @@ public class ProfileController {
 
 		DbQueryStatus dbQueryStatus = profileDriver.followFriend(userName, friendUserName);
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
-		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
@@ -111,7 +109,6 @@ public class ProfileController {
 
 		DbQueryStatus dbQueryStatus = profileDriver.unfollowFriend(userName, friendUserName);
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
-		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
