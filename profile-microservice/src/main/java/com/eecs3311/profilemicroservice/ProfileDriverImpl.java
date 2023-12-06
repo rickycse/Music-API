@@ -53,7 +53,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		try (Session session = driver.session()) {
 
 			// Run a query to add profile to Profile database
-			String query1 = String.format("CREATE (p:profile {userName: '%s', fullName: '%s', password: '%s'})\nCREATE (pl:playlist {plName: '%s'})\nWITH p,pl\nMATCH (p:profile {userName: '%s'}), (pl:playlist {plName: '%s'})\nCREATE (p)-[:created]->(pl)", userName, fullName, password, usernamePlaylist, userName, usernamePlaylist);
+			String query1 = String.format("CREATE (:profile {userName: '%s', fullName: '%s', password: '%s'})-[:created]->(:playlist {plName: '%s'})", userName, fullName, password, usernamePlaylist);
 			session.run(query1);
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
