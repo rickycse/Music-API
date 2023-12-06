@@ -58,14 +58,12 @@ public class ProfileController {
 		String userName = params.get("userName");
 		String fullName = params.get("fullName");
 		String password = params.get("password");
-		System.out.println("USERNAME = " + userName);
 
-
-		//TESTING OOUT CODE:
+		// Setting the response data
 		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(userName, fullName, password);
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
-
-
 	}
 
 	@RequestMapping(value = "/followFriend", method = RequestMethod.PUT)
@@ -80,10 +78,9 @@ public class ProfileController {
 		String friendUserName = params.get("friendUserName");
 
 		DbQueryStatus dbQueryStatus = profileDriver.followFriend(userName, friendUserName);
-
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
-
-		//return ResponseEntity.status(HttpStatus.OK).body(response); // TODO: replace with return statement similar to in getSongById
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
@@ -95,9 +92,8 @@ public class ProfileController {
 		// TODO: add any other values to the map following the example in SongController.getSongById
 
 		DbQueryStatus dbQueryStatus = profileDriver.getAllSongFriendsLike(userName);
-		System.out.println("Has exited profileDriverImpl.java and entered controller - " + dbQueryStatus.getData());
-		//response.get(dbQueryStatus.getData());
-
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
@@ -114,7 +110,8 @@ public class ProfileController {
 		String friendUserName = params.get("friendUserName");
 
 		DbQueryStatus dbQueryStatus = profileDriver.unfollowFriend(userName, friendUserName);
-
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("data", dbQueryStatus.getData());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
