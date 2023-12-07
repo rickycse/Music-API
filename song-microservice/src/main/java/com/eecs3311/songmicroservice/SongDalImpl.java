@@ -162,15 +162,12 @@ public class SongDalImpl implements SongDal {
 			Collections.shuffle(allSongs);
 
 			for (int i = 0; i < allSongs.size(); i++) {
-				if (totalSongDurCounter < lengthInSec) {
+				if (totalSongDurCounter + allSongs.get(i).getSongDuration() <= lengthInSec) {
+					// Adding the song at index 'i' will still be less than 'lengthInSec', so add it
 					randomSongs.add(allSongs.get(i));
 
 					// adding random song's duration to total count
 					totalSongDurCounter += allSongs.get(i).getSongDuration();
-					System.out.println("value of 'totalSongDurCounter' = " + totalSongDurCounter);
-				} else {
-					// We reached the time limits so break
-					break;
 				}
 			}
 
