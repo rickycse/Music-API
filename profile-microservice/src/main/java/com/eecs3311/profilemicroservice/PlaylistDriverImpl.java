@@ -103,28 +103,60 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
 		DbQueryStatus status;
+		// Mostly follows the same logic as likeSong
 		try {
 			Session session = driver.session();
-			// Sends a POST request to decrement the Song's favorites
-			String postUrl = "http://localhost:3001/updateSongFavouritesCount";
-			MediaType JSON = MediaType.get("application/json; charset=utf-8");
-			String payload = String.format("{\"songId\": \"%s\", \"shouldDecrement\": \"true\"}", songId);
-			RequestBody body = RequestBody.create(payload, JSON);
-			Request postRequest = new Request.Builder()
-					.url(postUrl)
-					.put(body)
-					.build();
-			try (Response response = client.newCall(postRequest).execute()){
-				if(!response.isSuccessful()){
-					return new DbQueryStatus("1. Failed POST request to " + postUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-				}
+			// Sends a GET request to check if the Song exists
+			try {
+				StatementResult result = driver.session().run(String.format("MATCH (s:song {songId:'%s'}) RETURN s", songId));
+				// Since the Song doesn't exist in Neo4j, checks if the Song exists in MongoDB
+				if (!result.hasNext()) {
+					String getUrl = "http://localhost:3001/getSongById/" + songId;
+					Request getRequest = new Request.Builder()
+							.url(getUrl)
+							.build();
+					try {
+						Response response = client.newCall(getRequest).execute();
+						if(!response.isSuccessful()){
+							return new DbQueryStatus("1. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+						}
+						// Since the Song does exist in MongoDB, create the Song in Neo4j.
+						driver.session().run(String.format("CREATE (s:song {songId: '%s'})", songId));
+					} catch (Exception e) {
+						return new DbQueryStatus("2. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					}
+				} // Otherwise, the Song already exists in both MongoDB and Neo4j
 			} catch (Exception e) {
-				return new DbQueryStatus("2. Failed POST request to " + postUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+				return new DbQueryStatus("Failed adding new Song to database", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			}
+			// Checks if the user has liked the song before to unlike it.
+			StatementResult hasLikedBefore = driver.session().run(String.format("MATCH (:playlist {userName: '%s-favorites'})-[r:includes]->(:song {songId:'%s'}) RETURN r", userName, songId));
+			if(hasLikedBefore.hasNext()){
+				// Sends a POST request to update Song favorites count
+				String postUrl = "http://localhost:3001/updateSongFavouritesCount";
+				String payload = String.format("{\"songId\": \"%s\", \"shouldDecrement\": \"true\"}", songId);
+				MediaType JSON = MediaType.get("application/json; charset=utf-8");
+				RequestBody body = RequestBody.create(payload, JSON);
+				Request postRequest = new Request.Builder()
+						.url(postUrl)
+						.put(body)
+						.build();
+				try {
+					Response response = client.newCall(postRequest).execute();
+					if(!response.isSuccessful()){
+						return new DbQueryStatus("1. Failed POST request to " + postUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					} else {
+						response.close();
+					}
+				} catch (Exception e) {
+					return new DbQueryStatus("2. Failed POST request to " + postUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+				}
 			}
 			// Deletes the includes relationship between the user's playlist and song.
-			session.run(String.format("MATCH (p:playlist {plName: '%s-favorites'})-[r:includes]->(s:song {songId: '%s'}) DELETE r", userName, songId));
+			session.run(String.format("MATCH (:playlist {plName: '%s-favorites'})-[r:includes]->(:song {songId: '%s'}) DELETE r", userName, songId));
 			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
 		} catch (Exception e){
+			e.printStackTrace();
 			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 		return status;

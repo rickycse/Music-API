@@ -152,7 +152,7 @@ public class ProfileController {
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
-	@RequestMapping(value = "/generateMixedPlaylist", method = RequestMethod.POST)
+	@RequestMapping(value = "/generateMixedPlaylist", method = RequestMethod.GET)
 	public ResponseEntity<Map<String, Object>> generateMixedPlaylist(@RequestBody Map<String, String> params, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();

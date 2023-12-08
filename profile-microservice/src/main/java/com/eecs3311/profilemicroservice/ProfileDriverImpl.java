@@ -1,10 +1,11 @@
 package com.eecs3311.profilemicroservice;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.json.JSONObject;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
@@ -18,6 +19,8 @@ import org.neo4j.driver.v1.Transaction;
 public class ProfileDriverImpl implements ProfileDriver {
 
 	Driver driver = ProfileMicroserviceApplication.driver;
+
+	OkHttpClient client = new OkHttpClient();
 
 	public static void InitProfileDb() {
 		String queryStr;
@@ -144,13 +147,27 @@ public class ProfileDriverImpl implements ProfileDriver {
 						// loop through the result2 values, and store it into the map corresponding to the userName
 						while (result2.hasNext()) {
 							Record record2 = result2.next();
-
 							// store all record2 values in 'likedSongIds' string array
-							likedSongIds.add(record2.get("likedSongId").asString());
+							String songId = record2.get("likedSongId").asString();
+
+							String getUrl = "http://localhost:3001/getSongTitleById/" + songId;
+							Request getRequest = new Request.Builder()
+									.url(getUrl)
+									.build();
+							try {
+								Response response = client.newCall(getRequest).execute();
+								if(!response.isSuccessful()){
+									return new DbQueryStatus("1. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+								}
+								JSONObject json = new JSONObject(Objects.requireNonNull(response.body()).string());
+								likedSongIds.add((String) json.get("data"));
+							} catch (Exception e) {
+								return new DbQueryStatus("2. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+							}
+
 						}
 						// Storing friendName  and likedSongIds into map
 						userNameToLikedSongs.put(friendList.get(i), getStringArrayFromArrayList(likedSongIds));
-
 						// After storing likedSongIds into the map, then we will delete all the data from the likedSongIds
 						likedSongIds.clear();
 					} else {
