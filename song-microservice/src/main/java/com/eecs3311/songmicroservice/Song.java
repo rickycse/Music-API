@@ -19,19 +19,12 @@ public class Song {
 	private String songArtistFullName;
 	private String songAlbum;
 	private long songAmountFavourites;
-	private int songDuration;
+	private long songDuration;
 	
 	public static final String KEY_SONG_NAME = "songName";
 	public static final String KEY_SONG_ARTIST_FULL_NAME = "songArtistFullName";
 	public static final String KEY_SONG_ALBUM = "songAlbum";
 
-	public Song() {
-		this.songName = songName;
-		this.songArtistFullName = songArtistFullName;
-		this.songAlbum = songAlbum;
-		this.songAmountFavourites = 0;
-		this.songDuration = 60;
-	}
 	public Song(String songName, String songArtistFullName, String songAlbum) {
 		this.songName = songName;
 		this.songArtistFullName = songArtistFullName;
@@ -40,9 +33,9 @@ public class Song {
 		this.songDuration = 60;
 	}
 
-	public int getSongDuration() { return songDuration; }
+	public long getSongDuration() { return songDuration; }
 
-	public void setSongDuration(int songDuration) { this.songDuration = songDuration; }
+	public void setSongDuration(long songDuration) { this.songDuration = songDuration; }
 
 	public String getSongName() {
 		return songName;
