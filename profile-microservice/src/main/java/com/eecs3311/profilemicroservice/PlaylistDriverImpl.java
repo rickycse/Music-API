@@ -28,7 +28,6 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			session.close();
 		}
 	}
-
 	/**
 	 * Method to like a song. It creates a relationship between a User and a Song node in the Neo4j database.
 	 * @param userName The username of the user liking the song.
