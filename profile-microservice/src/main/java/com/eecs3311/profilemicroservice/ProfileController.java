@@ -48,6 +48,36 @@ public class ProfileController {
 		this.playlistDriver = playlistDriver;
 	}
 
+	@RequestMapping(value = "/addSongNode/{songId}", method = RequestMethod.POST)
+	public ResponseEntity<Map<String, Object>> addSongNode(@PathVariable("songId") String songId, HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("POST %s", Utils.getUrl(request)));
+
+		//TODO: Add the parameters - String userName, String fullName, String password
+		DbQueryStatus dbQueryStatus = playlistDriver.addSongNode(songId);
+
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("message", dbQueryStatus.getMessage());
+
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+	}
+
+	@RequestMapping(value = "/deleteSongNode/{songId}", method = RequestMethod.DELETE)
+	public ResponseEntity<Map<String, Object>> deleteSongNode(@PathVariable("songId") String songId, HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("DELETE %s", Utils.getUrl(request)));
+
+		//TODO: Add the parameters - String userName, String fullName, String password
+		DbQueryStatus dbQueryStatus = playlistDriver.deleteSongNode(songId);
+
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("message", dbQueryStatus.getMessage());
+
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+	}
+
 	@RequestMapping(value = "/profile", method = RequestMethod.POST)
 	public ResponseEntity<Map<String, Object>> addProfile(@RequestBody Map<String, String> params, HttpServletRequest request) {
 

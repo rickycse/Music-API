@@ -39,37 +39,56 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	}
 
 	@Override
+	public DbQueryStatus addSongNode(String songId) {
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			// Checks if the Song node already exists or not
+			StatementResult hasSong = driver.session().run(String.format("MATCH (s:song {songId: '%s'}) RETURN s", songId));
+			// Adds the Song if it does not exist
+			if(!hasSong.hasNext()){
+				session.run(String.format("CREATE (s:song {songId: '%s'})", songId));
+			}
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			e.printStackTrace();
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
+	}
+
+	@Override
+	public DbQueryStatus deleteSongNode(String songId) {
+		DbQueryStatus status;
+		try {
+			Session session = driver.session();
+			// Deletes any relationships with the song
+			driver.session().run(String.format("MATCH (:playlist)-[r:includes]->(:song {songId: '%s'}) DELETE r", songId));
+			// Deletes the song
+			session.run(String.format("MATCH (s:song {songId: '%s'}) DELETE s", songId));
+			status = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+		} catch (Exception e){
+			e.printStackTrace();
+			status = new DbQueryStatus("Failed", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		return status;
+	}
+
+	@Override
 	public DbQueryStatus likeSong(String userName, String songId) {
 		DbQueryStatus status;
 
 		try {
 			Session session = driver.session();
-			// Sends a GET request to check if the Song exists
-			try {
-				StatementResult result = driver.session().run(String.format("MATCH (s:song {songId:'%s'}) RETURN s", songId));
-				// Since the Song doesn't exist in Neo4j, checks if the Song exists in MongoDB
-				if (!result.hasNext()) {
-					String getUrl = "http://localhost:3001/getSongById/" + songId;
-					Request getRequest = new Request.Builder()
-							.url(getUrl)
-							.build();
-					try {
-						Response response = client.newCall(getRequest).execute();
-						if(!response.isSuccessful()){
-							return new DbQueryStatus("1. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-						}
-						// Since the Song does exist in MongoDB, create the Song in Neo4j.
-						driver.session().run(String.format("CREATE (s:song {songId: '%s'})", songId));
-					} catch (Exception e) {
-						return new DbQueryStatus("2. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-					}
-				} // Otherwise, the Song already exists in both MongoDB and Neo4j
-			} catch (Exception e) {
-				return new DbQueryStatus("Failed adding new Song to database", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			StatementResult result = driver.session().run(String.format("MATCH (s:song {songId:'%s'}) RETURN s", songId));
+			// Throws a not found error if the song does not exist in Neo4j DB
+			if(!result.hasNext()){
+				return new DbQueryStatus("Song with ID does not exist", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 			}
 			// Checks if the user has liked the song before to prevent duplicate liking.
 			StatementResult hasLikedBefore = driver.session().run(String.format("MATCH (:playlist {userName: '%s-favorites'})-[r:includes]->(:song {songId:'%s'}) RETURN r", userName, songId));
-			if(hasLikedBefore.hasNext()){
+			// Updates the Song favorites count if they haven't
+			if(!hasLikedBefore.hasNext()){
 				// Sends a POST request to update Song favorites count
 				String postUrl = "http://localhost:3001/updateSongFavouritesCount";
 				String payload = String.format("{\"songId\": \"%s\", \"shouldDecrement\": \"false\"}", songId);
@@ -103,35 +122,19 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
 		DbQueryStatus status;
+		Session session = driver.session();
+
+		StatementResult result = driver.session().run(String.format("MATCH (s:song {songId:'%s'}) RETURN s", songId));
+		// Throws a not found error if the song does not exist in Neo4j DB
+		if(!result.hasNext()){
+			return new DbQueryStatus("Song with ID does not exist", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+		}
 		// Mostly follows the same logic as likeSong
 		try {
-			Session session = driver.session();
-			// Sends a GET request to check if the Song exists
-			try {
-				StatementResult result = driver.session().run(String.format("MATCH (s:song {songId:'%s'}) RETURN s", songId));
-				// Since the Song doesn't exist in Neo4j, checks if the Song exists in MongoDB
-				if (!result.hasNext()) {
-					String getUrl = "http://localhost:3001/getSongById/" + songId;
-					Request getRequest = new Request.Builder()
-							.url(getUrl)
-							.build();
-					try {
-						Response response = client.newCall(getRequest).execute();
-						if(!response.isSuccessful()){
-							return new DbQueryStatus("1. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-						}
-						// Since the Song does exist in MongoDB, create the Song in Neo4j.
-						driver.session().run(String.format("CREATE (s:song {songId: '%s'})", songId));
-					} catch (Exception e) {
-						return new DbQueryStatus("2. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-					}
-				} // Otherwise, the Song already exists in both MongoDB and Neo4j
-			} catch (Exception e) {
-				return new DbQueryStatus("Failed adding new Song to database", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-			}
 			// Checks if the user has liked the song before to unlike it.
 			StatementResult hasLikedBefore = driver.session().run(String.format("MATCH (:playlist {userName: '%s-favorites'})-[r:includes]->(:song {songId:'%s'}) RETURN r", userName, songId));
-			if(hasLikedBefore.hasNext()){
+			// Updates the Song favorites count if they haven't
+			if(!hasLikedBefore.hasNext()){
 				// Sends a POST request to update Song favorites count
 				String postUrl = "http://localhost:3001/updateSongFavouritesCount";
 				String payload = String.format("{\"songId\": \"%s\", \"shouldDecrement\": \"true\"}", songId);
