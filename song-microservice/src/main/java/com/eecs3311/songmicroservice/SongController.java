@@ -70,10 +70,9 @@ public class SongController {
 		response.put("path", String.format("GET %s", Utils.getUrl(request)));
 		// TODO: add any other values to the map following the example in getSongById
 		DbQueryStatus dbQueryStatus = songDal.getSongTitleById(songId);
-
 		response.put("data", dbQueryStatus.getData());
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
-		System.out.println(dbQueryStatus.getData());
+
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
@@ -104,15 +103,17 @@ public class SongController {
 		String songName = params.get("songName");
 		String songArtistFullName = params.get("songArtistFullName");
 		String songAlbum = params.get("songAlbum");
+		System.out.println("PARAMS: " + params);
 
 		Song newSong;
 		if(params.containsKey("songDuration")){
-			long songDuration = Long.parseLong(params.get("songDuration"));
+			int songDuration = Integer.parseInt(params.get("songDuration"));
 			newSong = new Song(songName, songArtistFullName, songAlbum);
 		} else {
 			newSong = new Song(songName, songArtistFullName, songAlbum);
 		}
 		newSong.setId(new ObjectId());
+		System.out.println("newSong: " + newSong.toString());
 
 		DbQueryStatus dbQueryStatus = songDal.addSong(newSong);
 		response.put("data", dbQueryStatus.getData());
@@ -132,6 +133,19 @@ public class SongController {
 		boolean shouldDecrement = Boolean.parseBoolean(params.get("shouldDecrement"));
 
 		DbQueryStatus dbQueryStatus = songDal.updateSongFavouritesCount(songId, shouldDecrement);
+		response.put("data", dbQueryStatus.getData());
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+	}
+
+	@RequestMapping(value = "/generateRandomPlaylist/{lengthInMinutes}", method = RequestMethod.GET)
+	public ResponseEntity<Map<String, Object>> generateRandomPlaylist(@PathVariable("lengthInMinutes") int lengthInMinutes, HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("GET %s", Utils.getUrl(request)));
+
+		DbQueryStatus dbQueryStatus = songDal.generateRandomPlaylist(lengthInMinutes);
 		response.put("data", dbQueryStatus.getData());
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
 

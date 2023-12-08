@@ -6,4 +6,5 @@ public interface SongDal {
 	DbQueryStatus getSongTitleById(String songId);
 	DbQueryStatus deleteSongById(String songId);	
 	DbQueryStatus updateSongFavouritesCount(String songId, boolean shouldDecrement);
+	DbQueryStatus generateRandomPlaylist(int lengthInMinutes);
 }
