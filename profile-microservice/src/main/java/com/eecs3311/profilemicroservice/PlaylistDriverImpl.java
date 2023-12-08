@@ -42,12 +42,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	}
 	/**
 	 * Method to like a song. It creates a relationship between a User and a Song node in the Neo4j database.
-	 * @param playlistId The username of the user liking the song.
+	 * @param userName The username of the user liking the song.
 	 * @param songId The ID of the song being liked.
 	 * @return DbQueryStatus The status of the database query including any error or success messages.
 	 */
 	@Override
-	public DbQueryStatus likeSong(String playlistId, String songId) {
+	public DbQueryStatus likeSong(String userName, String songId) {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Like Song", DbQueryExecResult.QUERY_OK);
 
@@ -66,12 +66,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		try (Session session = driver.session()) {
 			// Step 2: Create the song in Neo4j if it exists and create a relationship
-			String query = "MATCH (s:Song { songArtistFullName: \"" + playlistId + "\" }) " +
+			String query = "MATCH (s:Song { songArtistFullName: \"" + userName + "\" }) " +
 					"WHERE id(s) = " + songId +
 					" SET s.songAmountFavourites = s.songAmountFavourites + 1 " +
 					"RETURN s";
 
-			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
+			StatementResult result = session.run(query, Values.parameters("playlistId", userName, "songId", songId));
 
 			if (!result.hasNext()) {
 				dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
@@ -103,12 +103,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 	/**
 	 * Method to unlike a song. It deletes a relationship between a User and a Song node in the Neo4j database.
-	 * @param playlistId The username of the user unliking the song.
+	 * @param userName The username of the user unliking the song.
 	 * @param songId The ID of the song being unliked.
 	 * @return DbQueryStatus The status of the database query including any error or success messages.
 	 */
 	@Override
-	public DbQueryStatus unlikeSong(String playlistId, String songId) {
+	public DbQueryStatus unlikeSong(String userName, String songId) {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Unlike Song", DbQueryExecResult.QUERY_OK);
 
@@ -116,13 +116,13 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			// Step 1: Verify the song exists in Neo4j
 
 
-			String query = "MATCH (s:Song { songArtistFullName: \"" + playlistId + "\" }) " +
+			String query = "MATCH (s:Song { songArtistFullName: \"" + userName + "\" }) " +
 					"WHERE id(s) = " + songId +
 					" SET s.songAmountFavourites = s.songAmountFavourites - 1 " +
 					"RETURN s";
 
 
-			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
+			StatementResult result = session.run(query, Values.parameters("playlistId", userName, "songId", songId));
 
 			if (!result.hasNext()) {
 				dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
@@ -131,7 +131,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			}
 			String deleteQuery = "MATCH (p:Playlist {id: $playlistId})-[r:CONTAINS]->(s:Song {id: $songId}) " +
 					"DELETE r";
-			session.run(deleteQuery, Values.parameters("playlistId", playlistId, "songId", songId));
+			session.run(deleteQuery, Values.parameters("playlistId", userName, "songId", songId));
 			dbQueryStatus.setMessage("Song removed from playlist successfully");
 
 			// Step 3: Send a PUT request to update songFavoritesCount
