@@ -1,5 +1,6 @@
 package com.eecs3311.profilemicroservice;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 import okhttp3.OkHttpClient;
@@ -112,7 +113,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 			String[] emptyArrayTemp = new String[0];
 
 			// Performing query1 to retrieve a list of all profile(s) userName follows
-			String query1 = String.format("MATCH (p:profile {userName: '%s'})-[:follows]->(friend:profile) RETURN friend.userName AS userName", userName);
+			String query1 = String.format("MATCH (:profile {userName: '%s'})-[:follows]->(friend:profile) RETURN friend.userName AS userName", userName);
 			StatementResult result = session.run(query1);
 
 			// making sure retrieved result is not empty (aka userName doe not follow anyone)
@@ -137,7 +138,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 					userFavPlaylistName = currentUserName + "-favorites";
 
 					// setting up query2 to use friend's userName to get their liked songs
-					String query2 = String.format("MATCH (p:profile {userName: '%s'})-[:created]->(pl:playlist {plName: '%s'})-[:includes]->(song:song)\nRETURN song.songId AS likedSongId", friendList.get(i), userFavPlaylistName);
+					String query2 = String.format("MATCH (pl:playlist {plName: '%s'})-[:includes]->(song:song) RETURN song.songId AS likedSongId", userFavPlaylistName);
 					StatementResult result2 = driver.session().run(query2);
 
 					// Check to see if there are any liked songs for current friend in the list
@@ -148,26 +149,27 @@ public class ProfileDriverImpl implements ProfileDriver {
 						while (result2.hasNext()) {
 							Record record2 = result2.next();
 							// store all record2 values in 'likedSongIds' string array
-							String songId = record2.get("likedSongId").asString();
+							likedSongIds.add(record2.get("likedSongId").asString());
+						}
 
+						ArrayList<String> songNames = new ArrayList<>();
+						for (String songId : likedSongIds) {
 							String getUrl = "http://localhost:3001/getSongTitleById/" + songId;
-							Request getRequest = new Request.Builder()
-									.url(getUrl)
-									.build();
+							Request getRequest = new Request.Builder().url(getUrl).build();
 							try {
 								Response response = client.newCall(getRequest).execute();
-								if(!response.isSuccessful()){
+								if (!response.isSuccessful()) {
 									return new DbQueryStatus("1. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 								}
 								JSONObject json = new JSONObject(Objects.requireNonNull(response.body()).string());
-								likedSongIds.add((String) json.get("data"));
+								songNames.add((String) json.get("data"));
 							} catch (Exception e) {
 								return new DbQueryStatus("2. Failed GET request to " + getUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 							}
-
 						}
+
 						// Storing friendName  and likedSongIds into map
-						userNameToLikedSongs.put(friendList.get(i), getStringArrayFromArrayList(likedSongIds));
+						userNameToLikedSongs.put(friendList.get(i), songNames.toArray(new String[0]));
 						// After storing likedSongIds into the map, then we will delete all the data from the likedSongIds
 						likedSongIds.clear();
 					} else {
