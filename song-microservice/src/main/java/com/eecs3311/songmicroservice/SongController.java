@@ -103,7 +103,6 @@ public class SongController {
 		String songName = params.get("songName");
 		String songArtistFullName = params.get("songArtistFullName");
 		String songAlbum = params.get("songAlbum");
-		System.out.println("PARAMS: " + params);
 
 		Song newSong;
 		if(params.containsKey("songDuration")){
@@ -114,7 +113,6 @@ public class SongController {
 			newSong = new Song(songName, songArtistFullName, songAlbum);
 		}
 		newSong.setId(new ObjectId());
-		System.out.println("newSong: " + newSong.toString());
 
 		DbQueryStatus dbQueryStatus = songDal.addSong(newSong);
 		response.put("data", dbQueryStatus.getData());

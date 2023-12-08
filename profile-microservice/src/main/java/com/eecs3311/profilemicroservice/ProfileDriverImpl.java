@@ -68,7 +68,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Start a session
 		try (Session session = driver.session()) {
 			// follow friend query
-			String query1 = String.format("MATCH (p1:profile {userName: '%s'}), (p2:profile {userName: '%s'})\nCREATE (p1)-[:follows]->(p2)", userName, frndUserName);
+			String query1 = String.format("MATCH (p1:profile {userName: '%s'}), (p2:profile {userName: '%s'}) MERGE (p1)-[:follows]->(p2)", userName, frndUserName);
 			session.run(query1);
 
 			return new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
