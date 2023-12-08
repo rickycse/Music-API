@@ -8,11 +8,14 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -143,5 +146,39 @@ public class SongDalImpl implements SongDal {
 
 		DbQueryStatus status = new DbQueryStatus(response, execResult);
 		return status;
+	}
+
+	@Override
+	public DbQueryStatus generateRandomPlaylist(int length) {
+		//
+		int lengthInSec = length * 60;
+		int totalSongDurCounter = 0;
+
+		try {
+			List<Song> randomSongs = new ArrayList<>();
+
+			// get all songs from the database
+			List<Song> allSongs = db.findAll(Song.class);
+
+			// randomize the order of the songs
+			Collections.shuffle(allSongs);
+
+			for (int i = 0; i < allSongs.size(); i++) {
+				if (totalSongDurCounter + allSongs.get(i).getSongDuration() <= lengthInSec) {
+					// Adding the song at index 'i' will still be less than 'lengthInSec', so add it
+					randomSongs.add(allSongs.get(i));
+
+					// adding random song's duration to total count
+					totalSongDurCounter += allSongs.get(i).getSongDuration();
+				}
+			}
+
+			DbQueryStatus dbQueryStat = new DbQueryStatus("Success", DbQueryExecResult.QUERY_OK);
+			dbQueryStat.setData(randomSongs);
+			return dbQueryStat;
+		} catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+			return new DbQueryStatus("Failed: " + e.getMessage(), DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 }
