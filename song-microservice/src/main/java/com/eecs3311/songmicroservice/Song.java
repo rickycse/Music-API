@@ -25,27 +25,12 @@ public class Song {
 	public static final String KEY_SONG_ARTIST_FULL_NAME = "songArtistFullName";
 	public static final String KEY_SONG_ALBUM = "songAlbum";
 
-	public Song() {
-		this.songName = songName;
-		this.songArtistFullName = songArtistFullName;
-		this.songAlbum = songAlbum;
-		this.songAmountFavourites = 0;
-		this.songDuration = 60;
-	}
 	public Song(String songName, String songArtistFullName, String songAlbum) {
 		this.songName = songName;
 		this.songArtistFullName = songArtistFullName;
 		this.songAlbum = songAlbum;
 		this.songAmountFavourites = 0;
 		this.songDuration = 60;
-	}
-
-	public Song(String songName, String songArtistFullName, String songAlbum, int songDuration) {
-		this.songName = songName;
-		this.songArtistFullName = songArtistFullName;
-		this.songAlbum = songAlbum;
-		this.songAmountFavourites = 0;
-		this.songDuration = songDuration;
 	}
 
 	public int getSongDuration() { return songDuration; }

@@ -108,7 +108,8 @@ public class SongController {
 		Song newSong;
 		if(params.containsKey("songDuration")){
 			int songDuration = Integer.parseInt(params.get("songDuration"));
-			newSong = new Song(songName, songArtistFullName, songAlbum, songDuration);
+			newSong = new Song(songName, songArtistFullName, songAlbum);
+			newSong.setSongDuration(songDuration);
 		} else {
 			newSong = new Song(songName, songArtistFullName, songAlbum);
 		}
