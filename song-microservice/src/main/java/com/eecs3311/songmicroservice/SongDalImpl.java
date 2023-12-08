@@ -1,5 +1,6 @@
 package com.eecs3311.songmicroservice;
 
+import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -16,6 +17,8 @@ public class SongDalImpl implements SongDal {
 
 	private final MongoTemplate db;
 
+	private OkHttpClient client = new OkHttpClient();
+
 	@Autowired
 	public SongDalImpl(MongoTemplate mongoTemplate) {
 		this.db = mongoTemplate;
@@ -26,11 +29,25 @@ public class SongDalImpl implements SongDal {
 		// TODO Auto-generated method stub
 		DbQueryExecResult execResult;
 		String response;
-		Song data = songToAdd;
 
 		try {
+			// Adds the Song to MongoDB
 			db.insert(songToAdd);
-			response = String.format("Successfully added Song %s to database", songToAdd.getSongName());
+			// Sends a POST request to add the Song in Neo4j DB
+			String postUrl = "http://localhost:3002/addSongNode/" + songToAdd.getId();
+			RequestBody empty = RequestBody.create("", null);
+			Request postRequest = new Request.Builder().url(postUrl).post(empty).build();
+			try {
+				Response r = client.newCall(postRequest).execute();
+				if(!r.isSuccessful()){
+					return new DbQueryStatus("1. Failed POST request to " + postUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+				} else {
+					r.close();
+				}
+			} catch (Exception e) {
+				return new DbQueryStatus("2. Failed POST request to " + postUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			}
+			response = String.format("Successfully added Song %s to MongoDB and Neo4j", songToAdd.getSongName());
 			execResult = DbQueryExecResult.QUERY_OK;
 		} catch (Exception e){
 			response = String.format("Error %s", e);
@@ -38,7 +55,7 @@ public class SongDalImpl implements SongDal {
 		}
 
 		DbQueryStatus status = new DbQueryStatus(response, execResult);
-		status.setData(data);
+		status.setData(songToAdd);
 		return status;
 	}
 
@@ -99,15 +116,31 @@ public class SongDalImpl implements SongDal {
 
 		try {
 			db.remove(query, Song.class);
-			response = String.format("Removed Song with ID %s from database", songId);
-			execResult = DbQueryExecResult.QUERY_OK;
+			try {
+				String deleteUrl = "http://localhost:3002/deleteSongNode/" + songId;
+				RequestBody empty = RequestBody.create("", null);
+				Request deleteRequest = new Request.Builder().url(deleteUrl).delete(empty).build();
+				try {
+					Response r = client.newCall(deleteRequest).execute();
+					if(!r.isSuccessful()){
+						return new DbQueryStatus("1. Failed DELETE request to " + deleteUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					} else {
+						r.close();
+					}
+				} catch (Exception e) {
+					return new DbQueryStatus("2. Failed DELETE request to " + deleteUrl, DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+				}
+				response = String.format("Deleted Song with ID '%s' from MongoDB and Neo4j", songId);
+				execResult = DbQueryExecResult.QUERY_OK;
+			} catch (Exception e){
+				response = String.format("Error deleting from MongoDB.\n%s", e);
+				execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
+			}
 		} catch (Exception e){
-			response = String.format("Error %s", e);
+			response = String.format("Error: %s", e);
 			execResult = DbQueryExecResult.QUERY_ERROR_GENERIC;
 		}
-		System.out.println(response);
-		DbQueryStatus status = new DbQueryStatus(response, execResult);
-		return status;
+		return new DbQueryStatus(response, execResult);
 	}
 
 	@Override

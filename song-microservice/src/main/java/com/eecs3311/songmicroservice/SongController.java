@@ -31,7 +31,6 @@ public class SongController {
 	private final SongDal songDal;
 
 	private OkHttpClient client = new OkHttpClient();
-
 	
 	public SongController(SongDal songDal) {
 		this.songDal = songDal;
@@ -117,7 +116,7 @@ public class SongController {
 		DbQueryStatus dbQueryStatus = songDal.addSong(newSong);
 		response.put("data", dbQueryStatus.getData());
 		response.put("status", dbQueryStatus.getdbQueryExecResult());
-
+		response.put("response", dbQueryStatus.getMessage());
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
 
