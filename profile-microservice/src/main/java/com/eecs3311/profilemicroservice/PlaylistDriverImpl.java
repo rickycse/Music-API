@@ -51,7 +51,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Like Song", DbQueryExecResult.QUERY_OK);
 
-		//  Check if the song exists in MongoDB
+		/*//  Check if the song exists in MongoDB
 		String songUrl = "http://localhost:3001/getSongById/" + songId;
 		Request request = new Request.Builder().url(songUrl).build();
 		try {
@@ -62,14 +62,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new DbQueryStatus("Error checking song in MongoDB", DbQueryExecResult.QUERY_ERROR_GENERIC);
-		}
+		}*/
 
 		try (Session session = driver.session()) {
 			// Step 2: Create the song in Neo4j if it exists and create a relationship
-			String query = "MERGE (s:Song {id: $songId}) " +
-					"WITH s MATCH (p:Playlist {id: $playlistId}) " +
-					"MERGE (p)-[:CONTAINS]->(s) " +
+			String query = "MATCH (s:Song { songArtistFullName: \"" + playlistId + "\" }) " +
+					"WHERE id(s) = " + songId +
+					" SET s.songAmountFavourites = s.songAmountFavourites + 1 " +
 					"RETURN s";
+
 			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
 
 			if (!result.hasNext()) {
@@ -113,8 +114,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		try (Session session = driver.session()) {
 			// Step 1: Verify the song exists in Neo4j
-			String query = "MATCH (p:Playlist {id: $playlistId})-[r:CONTAINS]->(s:Song {id: $songId}) " +
-					"RETURN r, s";
+
+
+			String query = "MATCH (s:Song { songArtistFullName: \"" + playlistId + "\" }) " +
+					"WHERE id(s) = " + songId +
+					" SET s.songAmountFavourites = s.songAmountFavourites - 1 " +
+					"RETURN s";
+
+
 			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
 
 			if (!result.hasNext()) {

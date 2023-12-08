@@ -22,7 +22,7 @@ public class ProfileMicroserviceApplication {
 		ProfileDriverImpl.InitProfileDb();
 		PlaylistDriverImpl.InitPlaylistDb();
 		
-		System.out.println("Profile service is running on port 3002");
+		System.out.println("Profile service is running on port 3001");
 	}
 }
 
