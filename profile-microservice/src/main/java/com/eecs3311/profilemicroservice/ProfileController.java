@@ -151,4 +151,23 @@ public class ProfileController {
 
 		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 	}
+
+	@RequestMapping(value = "/generateMixedPlaylist", method = RequestMethod.POST)
+	public ResponseEntity<Map<String, Object>> generateMixedPlaylist(@RequestBody Map<String, String> params, HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		// TODO: add any other values to the map following the example in SongController.getSongById
+
+		//TODO: Add the parameters - String userName, String songId
+		String userName = params.get("userName");
+		String friendUserName = params.get("friendUserName");
+		DbQueryStatus dbQueryStatus = playlistDriver.generateMixedPlaylist(userName, friendUserName);
+
+		response.put("message", dbQueryStatus.getMessage());
+		response.put("status", dbQueryStatus.getdbQueryExecResult());
+		response.put("data", dbQueryStatus.getData());
+
+		return Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+	}
 }
