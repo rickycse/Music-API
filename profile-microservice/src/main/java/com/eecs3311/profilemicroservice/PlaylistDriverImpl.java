@@ -7,7 +7,6 @@ import org.json.JSONObject;
 import org.neo4j.driver.v1.*;
 import org.springframework.stereotype.Repository;
 
-import java.lang.Record;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -120,12 +119,13 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		ArrayList<Object> userSongs = new ArrayList<>();
 		ArrayList<Object> friendSongs = new ArrayList<>();
 		DbQueryStatus status = new DbQueryStatus("", DbQueryExecResult.QUERY_OK);
+		// Finds the playlists of both users, combines, and shuffles the playlists.
 		try {
 			String userQuery = String.format("MATCH (:playlist {plName: '%s-favorites'})-[:includes]->(s:song) RETURN s", userName);
 			StatementResult userPlaylist = driver.session().run(userQuery);
 			// Gets all the user's songs
 			while (userPlaylist.hasNext()) {
-				Record record = userPlaylist.next();
+				org.neo4j.driver.v1.Record record = userPlaylist.next();
 				Map<String, Object> map = record.get(0).asMap();
 				userSongs.add(map.get("songId"));
 			}
@@ -133,10 +133,11 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			String friendQuery = String.format("MATCH (:playlist {plName: '%s-favorites'})-[:includes]->(s:song) RETURN s", friendUserName);
 			StatementResult friendPlaylist = driver.session().run(friendQuery);
 			while (friendPlaylist.hasNext()) {
-				Record record = friendPlaylist.next();
+				org.neo4j.driver.v1.Record record = friendPlaylist.next();
 				Map<String, Object> map = record.get(0).asMap();
 				friendSongs.add(map.get("songId"));
 			}
+			// Adds and shuffles the combined playlist
 			userSongs.addAll(friendSongs);
 			Collections.shuffle(userSongs);
 		} catch (Exception e){
@@ -159,6 +160,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				return new DbQueryStatus("Error requesting song title with ID: " + id, DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 		}
+		// Returns a list of Song titles from the two playlists
 		status.setData(songTitles);
 		status.setMessage("Success");
 		return status;
