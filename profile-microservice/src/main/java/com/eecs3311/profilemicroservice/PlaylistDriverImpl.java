@@ -86,7 +86,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				return new DbQueryStatus("Song with ID does not exist", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 			}
 			// Checks if the user has liked the song before to prevent duplicate liking.
-			StatementResult hasLikedBefore = driver.session().run(String.format("MATCH (:playlist {userName: '%s-favorites'})-[r:includes]->(:song {songId:'%s'}) RETURN r", userName, songId));
+			StatementResult hasLikedBefore = driver.session().run(String.format("MATCH (:playlist {plName: '%s-favorites'})-[r:includes]->(:song {songId:'%s'}) RETURN r", userName, songId));
 			// Updates the Song favorites count if they haven't
 			if(!hasLikedBefore.hasNext()){
 				// Sends a POST request to update Song favorites count
