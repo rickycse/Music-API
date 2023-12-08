@@ -3,6 +3,8 @@ package com.eecs3311.profilemicroservice;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import org.json.JSONObject;
 import org.neo4j.driver.v1.*;
 import org.springframework.stereotype.Repository;
@@ -49,25 +51,49 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Like Song", DbQueryExecResult.QUERY_OK);
 
-		try(Session session = driver.session()){
-			// Cypher query to create a CONTAINS relationship between the Playlist and the Song.
-			String query = "MATCH (p:Playlist {id: $playlistId}), (s:Song {id: $songId}) "+
-					"MERGE (p)-[:CONTAINS]->(s) "+
+		//  Check if the song exists in MongoDB
+		String songUrl = "http://localhost:3001/getSongById/" + songId;
+		Request request = new Request.Builder().url(songUrl).build();
+		try {
+			Response response = client.newCall(request).execute();
+			if (!response.isSuccessful()) {
+				return new DbQueryStatus("Song not found in MongoDB", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("Error checking song in MongoDB", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+
+		try (Session session = driver.session()) {
+			// Step 2: Create the song in Neo4j if it exists and create a relationship
+			String query = "MERGE (s:Song {id: $songId}) " +
+					"WITH s MATCH (p:Playlist {id: $playlistId}) " +
+					"MERGE (p)-[:CONTAINS]->(s) " +
 					"RETURN s";
-			// Execute the query with the provided parameters.
 			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
 
-			// Check if the query did not find the playlist or the song.
-			if(!result.hasNext()){
+			if (!result.hasNext()) {
 				dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-				dbQueryStatus.setMessage("Playlist or song not found");
+				dbQueryStatus.setMessage("Playlist not found");
 			} else {
 				dbQueryStatus.setMessage("Song added to playlist successfully");
 			}
 		} catch (Exception e) {
-			// Handle any exceptions by setting the query status to an error.
 			dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_GENERIC);
 			dbQueryStatus.setData(e.getMessage());
+		}
+		String updateUrl = "http://localhost:3001/updateSongFavoritesCount/" + songId;
+		MediaType mediaType = MediaType.parse("application/json"); // or the appropriate media type
+		RequestBody body = RequestBody.create("", mediaType); // Empty body for PUT request
+		Request updateRequest = new Request.Builder().url(updateUrl).put(body).build();
+		try {
+			Response updateResponse = client.newCall(updateRequest).execute();
+			if (!updateResponse.isSuccessful()) {
+				return new DbQueryStatus("Error updating songFavoritesCount", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("Error sending PUT request to update songFavoritesCount", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 
 		return dbQueryStatus;
@@ -85,28 +111,42 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Unlike Song", DbQueryExecResult.QUERY_OK);
 
-		try(Session session = driver.session()){
-			// Cypher query to delete the CONTAINS relationship between the Playlist and the Song.
+		try (Session session = driver.session()) {
+			// Step 1: Verify the song exists in Neo4j
 			String query = "MATCH (p:Playlist {id: $playlistId})-[r:CONTAINS]->(s:Song {id: $songId}) " +
-					"DELETE r " +
-					"RETURN s";
-			// Execute the query with the provided parameters.
+					"RETURN r, s";
 			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
 
-			// Check if the query did not find the contains relationship.
-			if(!result.hasNext()){
+			if (!result.hasNext()) {
 				dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 				dbQueryStatus.setMessage("Relationship between playlist and song not found");
-			} else {
-				dbQueryStatus.setMessage("Song removed from playlist successfully");
+				return dbQueryStatus;
+			}
+			String deleteQuery = "MATCH (p:Playlist {id: $playlistId})-[r:CONTAINS]->(s:Song {id: $songId}) " +
+					"DELETE r";
+			session.run(deleteQuery, Values.parameters("playlistId", playlistId, "songId", songId));
+			dbQueryStatus.setMessage("Song removed from playlist successfully");
+
+			// Step 3: Send a PUT request to update songFavoritesCount
+			String updateUrl = "http://localhost:3001/updateSongFavoritesCount/" + songId;
+			MediaType mediaType = MediaType.parse("application/json"); // or the appropriate media type
+			RequestBody body = RequestBody.create("", mediaType); // Empty body for PUT request
+			Request updateRequest = new Request.Builder().url(updateUrl).put(body).build();
+			try {
+				Response updateResponse = client.newCall(updateRequest).execute();
+				if (!updateResponse.isSuccessful()) {
+					return new DbQueryStatus("Error updating songFavoritesCount", DbQueryExecResult.QUERY_ERROR_GENERIC);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return new DbQueryStatus("Error sending PUT request to update songFavoritesCount", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 		} catch (Exception e) {
-			// Handle any exceptions by setting the query status to an error.
 			dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_GENERIC);
 			dbQueryStatus.setData(e.getMessage());
 		}
 
-		return dbQueryStatus;
+			return dbQueryStatus;
 
 	}
 
