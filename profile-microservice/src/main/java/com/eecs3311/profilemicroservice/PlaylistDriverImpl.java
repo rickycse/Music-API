@@ -30,38 +30,34 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	}
 	/**
 	 * Method to like a song. It creates a relationship between a User and a Song node in the Neo4j database.
-	 * @param userName The username of the user liking the song.
+	 * @param playlistId The username of the user liking the song.
 	 * @param songId The ID of the song being liked.
 	 * @return DbQueryStatus The status of the database query including any error or success messages.
 	 */
 	@Override
-	public DbQueryStatus likeSong(String userName, String songId) {
+	public DbQueryStatus likeSong(String playlistId, String songId) {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Like Song", DbQueryExecResult.QUERY_OK);
 
 		try(Session session = driver.session()){
-			// Cypher query to create a LIKES relationship between the User and the Song.
-
-			String query = "MATCH (u:User {name: $userName}), (s:Song {id: $songId}) "+
-					"MERGE (u)-[:LIKES]->(s) "+
+			// Cypher query to create a CONTAINS relationship between the Playlist and the Song.
+			String query = "MATCH (p:Playlist {id: $playlistId}), (s:Song {id: $songId}) "+
+					"MERGE (p)-[:CONTAINS]->(s) "+
 					"RETURN s";
-
 			// Execute the query with the provided parameters.
-			StatementResult result = session.run(query, Values.parameters("userName", userName, "songId", songId));
+			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
 
-			// Check if the query did not find the user or the song.
+			// Check if the query did not find the playlist or the song.
 			if(!result.hasNext()){
 				dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-				dbQueryStatus.setMessage("User or song not found");
-			}else {
-				dbQueryStatus.setMessage("Song liked successfully");
+				dbQueryStatus.setMessage("Playlist or song not found");
+			} else {
+				dbQueryStatus.setMessage("Song added to playlist successfully");
 			}
-		}catch (Exception e){
+		} catch (Exception e) {
 			// Handle any exceptions by setting the query status to an error.
-
 			dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_GENERIC);
 			dbQueryStatus.setData(e.getMessage());
-
 		}
 
 		return dbQueryStatus;
@@ -70,31 +66,31 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 	/**
 	 * Method to unlike a song. It deletes a relationship between a User and a Song node in the Neo4j database.
-	 * @param userName The username of the user unliking the song.
+	 * @param playlistId The username of the user unliking the song.
 	 * @param songId The ID of the song being unliked.
 	 * @return DbQueryStatus The status of the database query including any error or success messages.
 	 */
 	@Override
-	public DbQueryStatus unlikeSong(String userName, String songId) {
+	public DbQueryStatus unlikeSong(String playlistId, String songId) {
 		// Initialize the query status with a default success message.
 		DbQueryStatus dbQueryStatus = new DbQueryStatus("Unlike Song", DbQueryExecResult.QUERY_OK);
 
 		try(Session session = driver.session()){
-			// Cypher query to delete the LIKES relationship between the User and the Song.
-			String query = "MATCH (u:User {name: $userName})-[r:LIKES]->(s:Song {id: $songId}) " +
+			// Cypher query to delete the CONTAINS relationship between the Playlist and the Song.
+			String query = "MATCH (p:Playlist {id: $playlistId})-[r:CONTAINS]->(s:Song {id: $songId}) " +
 					"DELETE r " +
 					"RETURN s";
 			// Execute the query with the provided parameters.
-			StatementResult result = session.run(query, Values.parameters("userName", userName, "songId", songId));
+			StatementResult result = session.run(query, Values.parameters("playlistId", playlistId, "songId", songId));
 
-			// Check if the query did not find the like relationship.
+			// Check if the query did not find the contains relationship.
 			if(!result.hasNext()){
 				dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-				dbQueryStatus.setMessage("Like relationship not found");
+				dbQueryStatus.setMessage("Relationship between playlist and song not found");
 			} else {
-				dbQueryStatus.setMessage("Song unliked successfully");
+				dbQueryStatus.setMessage("Song removed from playlist successfully");
 			}
-		}catch (Exception e){
+		} catch (Exception e) {
 			// Handle any exceptions by setting the query status to an error.
 			dbQueryStatus.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_GENERIC);
 			dbQueryStatus.setData(e.getMessage());
